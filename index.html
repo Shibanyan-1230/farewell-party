@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>送別会 出欠確認フォーム</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+    background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 50%, #e0f7fa 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    max-width: 520px;
+    width: 100%;
+    padding: 40px 32px;
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(0.8); }
+    60%  { transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    color: #37474f;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #90a4ae;
+    margin-bottom: 32px;
+    font-style: italic;
+  }
+
+  .form-group {
+    margin-bottom: 28px;
+  }
+
+  label.question {
+    display: block;
+    font-weight: 700;
+    color: #455a64;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    outline: none;
+  }
+
+  input[type="text"]:focus {
+    border-color: #7986cb;
+    box-shadow: 0 0 0 3px rgba(121,134,203,0.2);
+  }
+
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .radio-option {
+    position: relative;
+  }
+
+  .radio-option input[type="radio"] {
+    display: none;
+  }
+
+  .radio-option label {
+    display: block;
+    padding: 14px 18px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.93rem;
+    color: #546e7a;
+    user-select: none;
+  }
+
+  .radio-option label:hover {
+    border-color: #7986cb;
+    background: #f5f5ff;
+    transform: translateX(4px);
+  }
+
+  .radio-option input[type="radio"]:checked + label {
+    border-color: #7986cb;
+    background: #e8eaf6;
+    color: #283593;
+    font-weight: 600;
+  }
+
+  .reaction {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: #fff8e1;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: #6d4c41;
+    animation: popIn 0.4s ease-out;
+    display: none;
+  }
+
+  .reaction.visible {
+    display: block;
+  }
+
+  .submit-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #7986cb, #5c6bc0);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(92,107,192,0.4);
+  }
+
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+
+  .submit-btn:disabled {
+    background: #bdbdbd;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .result-screen {
+    display: none;
+    text-align: center;
+  }
+
+  .result-screen h2 {
+    font-size: 1.4rem;
+    color: #37474f;
+    margin-bottom: 10px;
+  }
+
+  .result-screen p {
+    color: #78909c;
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .countdown-box {
+    margin-top: 24px;
+    padding: 18px;
+    background: linear-gradient(135deg, #fce4ec, #f3e5f5);
+    border-radius: 14px;
+  }
+
+  .countdown-box .label {
+    font-size: 0.8rem;
+    color: #ad1457;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .countdown-box .days {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #c2185b;
+  }
+
+  .countdown-box .days-label {
+    font-size: 0.85rem;
+    color: #ad1457;
+  }
+
+  .confetti-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 999;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: fall linear forwards;
+  }
+
+  @keyframes fall {
+    0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  .error-msg {
+    color: #e53935;
+    font-size: 0.82rem;
+    margin-top: 6px;
+    display: none;
+  }
+
+  .sending-msg {
+    text-align: center;
+    color: #7986cb;
+    font-size: 0.9rem;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .error-screen {
+    display: none;
+    text-align: center;
+  }
+
+  .error-screen h2 {
+    font-size: 1.3rem;
+    color: #e53935;
+    margin-bottom: 10px;
+  }
+
+  .error-screen p {
+    color: #78909c;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+
+  .retry-btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #7986cb, #5c6bc0);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+
+  .retry-btn:hover {
+    transform: translateY(-2px);
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <!-- フォーム画面 -->
+  <div id="formScreen">
+    <h1>〇〇さん送別会 出欠確認フォーム</h1>
+    <p class="subtitle">あなたの選択が、送別会の未来を決める。</p>
+
+    <form id="rsvpForm" onsubmit="return false;">
+      <!-- Q1 氏名 -->
+      <div class="form-group">
+        <label class="question">Q1. 氏名を記載してください</label>
+        <input type="text" id="nameInput" placeholder="例：山田 太郎" autocomplete="off">
+        <p class="error-msg" id="nameError">※ 氏名の入力をお願いします！</p>
+      </div>
+
+      <!-- Q2 参加日程 -->
+      <div class="form-group">
+        <label class="question">Q2. あなたのスケジュールを教えてください</label>
+        <div class="radio-group">
+
+          <div class="radio-option">
+            <input type="radio" name="schedule" id="opt1" value="3/20（金）参加可能"
+                   data-reaction="金曜の夜、最高のスタートですね！">
+            <label for="opt1">3/20（金）参加可能</label>
+          </div>
+
+          <div class="radio-option">
+            <input type="radio" name="schedule" id="opt2" value="3/28（土）参加可能"
+                   data-reaction="土曜なら心置きなく飲めますね！">
+            <label for="opt2">3/28（土）参加可能</label>
+          </div>
+
+          <div class="radio-option">
+            <input type="radio" name="schedule" id="opt3" value="両日OK（送別会ガチ勢）"
+                   data-reaction="幹事が泣いて喜びます。あなたこそ真の送別会ガチ勢。">
+            <label for="opt3">両日OK（送別会ガチ勢）</label>
+          </div>
+
+          <div class="radio-option">
+            <input type="radio" name="schedule" id="opt4" value="両日NG（涙）"
+                   data-reaction="幹事は静かに泣いています…。心だけでも参加ですね。">
+            <label for="opt4">両日NG（涙）</label>
+          </div>
+
+        </div>
+        <div class="reaction" id="reactionBox"></div>
+        <p class="error-msg" id="scheduleError">※ 日程を選んでください！</p>
+      </div>
+
+      <button type="button" class="submit-btn" id="submitBtn" onclick="submitForm()">
+        送信（幹事へ念を送る）
+      </button>
+      <p class="sending-msg" id="sendingMsg">送信中... 念を転送しています</p>
+    </form>
+  </div>
+
+  <!-- 送信完了画面 -->
+  <div class="result-screen" id="resultScreen">
+    <h2>回答ありがとう！</h2>
+    <p>あなたの念は無事に幹事へ届きました。<br>幹事が全力で集計します。</p>
+
+    <div class="countdown-box">
+      <div class="label">送別会カウントダウン</div>
+      <div class="days" id="countdownDays">--</div>
+      <div class="days-label">日後に送別会！</div>
+    </div>
+  </div>
+
+  <!-- エラー画面 -->
+  <div class="error-screen" id="errorScreen">
+    <h2>送信に失敗しました…</h2>
+    <p>念の転送に失敗したようです。<br>電波の良い場所でもう一度お試しください。</p>
+    <button class="retry-btn" onclick="retryForm()">もう一度送信する</button>
+  </div>
+</div>
+
+<!-- 紙吹雪コンテナ -->
+<div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+  // ==============================================
+  // ★ ここにGoogle Apps ScriptのウェブアプリURLを貼る ★
+  // ==============================================
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzynYAiwPTTrL1Se13fCGyhglJ7nNvz1_ZX1oQBSG1iUDV2DRUUS3S4X2WZv7yo8Dmv/exec';
+
+  // ラジオボタン選択時のリアクション表示
+  document.querySelectorAll('input[name="schedule"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      const box = document.getElementById('reactionBox');
+      box.textContent = this.dataset.reaction;
+      box.classList.add('visible');
+      box.style.animation = 'none';
+      box.offsetHeight;
+      box.style.animation = 'popIn 0.4s ease-out';
+    });
+  });
+
+  function submitForm() {
+    const name = document.getElementById('nameInput').value.trim();
+    const schedule = document.querySelector('input[name="schedule"]:checked');
+    const nameError = document.getElementById('nameError');
+    const scheduleError = document.getElementById('scheduleError');
+    let valid = true;
+
+    nameError.style.display = name ? 'none' : 'block';
+    if (!name) valid = false;
+
+    scheduleError.style.display = schedule ? 'none' : 'block';
+    if (!schedule) valid = false;
+
+    if (!valid) return;
+
+    // ボタン無効化 & 送信中表示
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+    document.getElementById('sendingMsg').style.display = 'block';
+
+    // Google Apps Script へ送信
+    const data = {
+      name: name,
+      schedule: schedule.value,
+      timestamp: new Date().toLocaleString('ja-JP')
+    };
+
+    fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(() => {
+      showResult();
+    })
+    .catch(() => {
+      showError();
+    });
+  }
+
+  function showResult() {
+    document.getElementById('formScreen').style.display = 'none';
+    document.getElementById('errorScreen').style.display = 'none';
+    document.getElementById('resultScreen').style.display = 'block';
+    document.getElementById('resultScreen').style.animation = 'fadeInUp 0.5s ease-out';
+
+    // カウントダウン（3/20基準）
+    const now = new Date();
+    const target = new Date(now.getFullYear(), 2, 20);
+    if (target < now) target.setFullYear(target.getFullYear() + 1);
+    const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+    document.getElementById('countdownDays').textContent = diff;
+
+    launchConfetti();
+  }
+
+  function showError() {
+    document.getElementById('formScreen').style.display = 'none';
+    document.getElementById('errorScreen').style.display = 'block';
+    document.getElementById('errorScreen').style.animation = 'fadeInUp 0.5s ease-out';
+  }
+
+  function retryForm() {
+    document.getElementById('errorScreen').style.display = 'none';
+    document.getElementById('formScreen').style.display = 'block';
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = false;
+    btn.textContent = '送信（幹事へ念を送る）';
+    document.getElementById('sendingMsg').style.display = 'none';
+  }
+
+  function launchConfetti() {
+    const container = document.getElementById('confettiContainer');
+    const colors = ['#e91e63','#ff9800','#4caf50','#2196f3','#9c27b0','#ffeb3b'];
+    for (let i = 0; i < 60; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + '%';
+      piece.style.top = '-10px';
+      piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.width = (Math.random() * 8 + 6) + 'px';
+      piece.style.height = (Math.random() * 8 + 6) + 'px';
+      piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      piece.style.animationDelay = (Math.random() * 1.5) + 's';
+      container.appendChild(piece);
+    }
+    setTimeout(() => { container.innerHTML = ''; }, 5000);
+  }
+</script>
+
+</body>
+</html>
