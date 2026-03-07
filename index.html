@@ -15,6 +15,25 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* 背景に浮かぶ絵文字 */
+  .floating-emoji {
+    position: fixed;
+    font-size: 1.6rem;
+    opacity: 0.18;
+    pointer-events: none;
+    animation: floatUp linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.18; }
+    90%  { opacity: 0.18; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
   }
 
   .card {
@@ -25,6 +44,8 @@
     width: 100%;
     padding: 40px 32px;
     animation: fadeInUp 0.6s ease-out;
+    position: relative;
+    z-index: 1;
   }
 
   @keyframes fadeInUp {
@@ -36,6 +57,20 @@
     0%   { opacity: 0; transform: scale(0.8); }
     60%  { transform: scale(1.05); }
     100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  @keyframes emojiPop {
+    0%   { transform: translate(-50%, 0) scale(0); opacity: 1; }
+    50%  { transform: translate(-50%, -40px) scale(1.3); opacity: 1; }
+    100% { transform: translate(-50%, -70px) scale(0.8); opacity: 0; }
   }
 
   h1 {
@@ -50,11 +85,15 @@
     font-size: 0.82rem;
     color: #90a4ae;
     margin-bottom: 32px;
-    font-style: italic;
+    line-height: 1.6;
   }
 
   .form-group {
     margin-bottom: 28px;
+  }
+
+  .form-group.shake {
+    animation: shake 0.4s ease-out;
   }
 
   label.question {
@@ -104,6 +143,8 @@
     font-size: 0.93rem;
     color: #546e7a;
     user-select: none;
+    position: relative;
+    overflow: visible;
   }
 
   .radio-option label:hover {
@@ -119,6 +160,15 @@
     font-weight: 600;
   }
 
+  /* 選択時に飛び出す絵文字 */
+  .emoji-burst {
+    position: absolute;
+    font-size: 1.5rem;
+    pointer-events: none;
+    animation: emojiPop 0.8s ease-out forwards;
+    z-index: 10;
+  }
+
   .reaction {
     margin-top: 8px;
     padding: 10px 14px;
@@ -128,6 +178,7 @@
     color: #6d4c41;
     animation: popIn 0.4s ease-out;
     display: none;
+    border-left: 3px solid #ffca28;
   }
 
   .reaction.visible {
@@ -145,7 +196,7 @@
     font-size: 1.05rem;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
     margin-top: 8px;
     letter-spacing: 0.5px;
   }
@@ -153,6 +204,7 @@
   .submit-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(92,107,192,0.4);
+    background: linear-gradient(135deg, #5c6bc0, #3f51b5);
   }
 
   .submit-btn:active {
@@ -183,11 +235,23 @@
     line-height: 1.7;
   }
 
+  .result-message {
+    margin-top: 16px;
+    padding: 14px;
+    background: #f1f8e9;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    color: #558b2f;
+    border-left: 3px solid #8bc34a;
+    animation: popIn 0.5s ease-out 0.3s both;
+  }
+
   .countdown-box {
-    margin-top: 24px;
+    margin-top: 20px;
     padding: 18px;
     background: linear-gradient(135deg, #fce4ec, #f3e5f5);
     border-radius: 14px;
+    animation: popIn 0.5s ease-out 0.5s both;
   }
 
   .countdown-box .label {
@@ -245,6 +309,19 @@
     display: none;
   }
 
+  .sending-msg .dots::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%   { content: ''; }
+    25%  { content: '.'; }
+    50%  { content: '..'; }
+    75%  { content: '...'; }
+    100% { content: ''; }
+  }
+
   .error-screen {
     display: none;
     text-align: center;
@@ -291,39 +368,43 @@
 
     <form id="rsvpForm" onsubmit="return false;">
       <!-- Q1 氏名 -->
-      <div class="form-group">
+      <div class="form-group" id="nameGroup">
         <label class="question">Q1. 氏名を記載してください</label>
         <input type="text" id="nameInput" placeholder="例：山田 太郎" autocomplete="off">
         <p class="error-msg" id="nameError">※ 氏名の入力をお願いします！</p>
       </div>
 
       <!-- Q2 参加日程 -->
-      <div class="form-group">
+      <div class="form-group" id="scheduleGroup">
         <label class="question">Q2. あなたのスケジュールを教えてください</label>
         <div class="radio-group">
 
           <div class="radio-option">
             <input type="radio" name="schedule" id="opt1" value="3/20（金）参加可能"
-                   data-reaction="金曜の夜、最高のスタートですね！">
+                   data-reaction="金曜の夜、最高のスタートですね！"
+                   data-emoji="🍻">
             <label for="opt1">3/20（金）参加可能</label>
           </div>
 
           <div class="radio-option">
             <input type="radio" name="schedule" id="opt2" value="3/28（土）参加可能"
-                   data-reaction="土曜なら心置きなく飲めますね！">
+                   data-reaction="土曜なら心置きなく飲めますね！"
+                   data-emoji="🎉">
             <label for="opt2">3/28（土）参加可能</label>
           </div>
 
           <div class="radio-option">
-            <input type="radio" name="schedule" id="opt3" value="両日OK（送別会ガチ勢）"
-                   data-reaction="幹事が泣いて喜びます。あなたこそ真の送別会ガチ勢。">
-            <label for="opt3">両日OK（送別会ガチ勢）</label>
+            <input type="radio" name="schedule" id="opt3" value="両日OK"
+                   data-reaction="幹事が泣いて喜びます。感謝の極み…！"
+                   data-emoji="🙌">
+            <label for="opt3">両日OK</label>
           </div>
 
           <div class="radio-option">
-            <input type="radio" name="schedule" id="opt4" value="両日NG（涙）"
-                   data-reaction="幹事は静かに泣いています…。心だけでも参加ですね。">
-            <label for="opt4">両日NG（涙）</label>
+            <input type="radio" name="schedule" id="opt4" value="両日NG"
+                   data-reaction="幹事は静かに泣いています…。心だけでも参加ですね。"
+                   data-emoji="😢">
+            <label for="opt4">両日NG</label>
           </div>
 
         </div>
@@ -334,7 +415,7 @@
       <button type="button" class="submit-btn" id="submitBtn" onclick="submitForm()">
         送信（幹事へ念を送る）
       </button>
-      <p class="sending-msg" id="sendingMsg">送信中... 念を転送しています</p>
+      <p class="sending-msg" id="sendingMsg">念を転送しています<span class="dots"></span></p>
     </form>
   </div>
 
@@ -342,6 +423,8 @@
   <div class="result-screen" id="resultScreen">
     <h2>回答ありがとう！</h2>
     <p>あなたの念は無事に幹事へ届きました。<br>幹事が全力で集計します。</p>
+
+    <div class="result-message" id="funMessage"></div>
 
     <div class="countdown-box">
       <div class="label">送別会カウントダウン</div>
@@ -362,12 +445,36 @@
 <div class="confetti-container" id="confettiContainer"></div>
 
 <script>
-  // ==============================================
-  // ★ ここにGoogle Apps ScriptのウェブアプリURLを貼る ★
-  // ==============================================
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbzynYAiwPTTrL1Se13fCGyhglJ7nNvz1_ZX1oQBSG1iUDV2DRUUS3S4X2WZv7yo8Dmv/exec';
 
-  // ラジオボタン選択時のリアクション表示
+  // ========== 背景の浮遊絵文字 ==========
+  (function createFloatingEmojis() {
+    const emojis = ['🍺','🎊','🥂','🎶','✨','🍻','🎈','🥳'];
+    for (let i = 0; i < 12; i++) {
+      const el = document.createElement('div');
+      el.className = 'floating-emoji';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = Math.random() * 100 + '%';
+      el.style.animationDuration = (Math.random() * 10 + 12) + 's';
+      el.style.animationDelay = (Math.random() * 10) + 's';
+      el.style.fontSize = (Math.random() * 1 + 1.2) + 'rem';
+      document.body.appendChild(el);
+    }
+  })();
+
+  // ========== 選択時の絵文字バースト ==========
+  function burstEmoji(label, emoji) {
+    const rect = label.getBoundingClientRect();
+    const el = document.createElement('span');
+    el.className = 'emoji-burst';
+    el.textContent = emoji;
+    el.style.left = (rect.width / 2) + 'px';
+    el.style.top = '0px';
+    label.appendChild(el);
+    setTimeout(() => el.remove(), 800);
+  }
+
+  // ========== ラジオボタン選択時 ==========
   document.querySelectorAll('input[name="schedule"]').forEach(radio => {
     radio.addEventListener('change', function() {
       const box = document.getElementById('reactionBox');
@@ -376,9 +483,29 @@
       box.style.animation = 'none';
       box.offsetHeight;
       box.style.animation = 'popIn 0.4s ease-out';
+
+      // 絵文字バースト
+      const label = this.nextElementSibling;
+      burstEmoji(label, this.dataset.emoji);
     });
   });
 
+  // ========== 送信ボタンホバーで文言チェンジ ==========
+  const btnTexts = [
+    '送信（幹事へ念を送る）',
+    '送信（祈りを込めて）',
+    '送信（ポチッとな）',
+    '送信（覚悟はいいか）',
+    '送信（幹事が待ってる）'
+  ];
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.addEventListener('mouseenter', function() {
+    if (!this.disabled) {
+      this.textContent = btnTexts[Math.floor(Math.random() * btnTexts.length)];
+    }
+  });
+
+  // ========== バリデーション（震えるエラー） ==========
   function submitForm() {
     const name = document.getElementById('nameInput').value.trim();
     const schedule = document.querySelector('input[name="schedule"]:checked');
@@ -386,21 +513,35 @@
     const scheduleError = document.getElementById('scheduleError');
     let valid = true;
 
-    nameError.style.display = name ? 'none' : 'block';
-    if (!name) valid = false;
+    if (!name) {
+      valid = false;
+      nameError.style.display = 'block';
+      const g = document.getElementById('nameGroup');
+      g.classList.remove('shake');
+      void g.offsetHeight;
+      g.classList.add('shake');
+    } else {
+      nameError.style.display = 'none';
+    }
 
-    scheduleError.style.display = schedule ? 'none' : 'block';
-    if (!schedule) valid = false;
+    if (!schedule) {
+      valid = false;
+      scheduleError.style.display = 'block';
+      const g = document.getElementById('scheduleGroup');
+      g.classList.remove('shake');
+      void g.offsetHeight;
+      g.classList.add('shake');
+    } else {
+      scheduleError.style.display = 'none';
+    }
 
     if (!valid) return;
 
     // ボタン無効化 & 送信中表示
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    btn.textContent = '送信中...';
+    submitBtn.disabled = true;
+    submitBtn.textContent = '送信中...';
     document.getElementById('sendingMsg').style.display = 'block';
 
-    // Google Apps Script へ送信
     const data = {
       name: name,
       schedule: schedule.value,
@@ -414,18 +555,41 @@
       body: JSON.stringify(data)
     })
     .then(() => {
-      showResult();
+      showResult(schedule.value);
     })
     .catch(() => {
       showError();
     });
   }
 
-  function showResult() {
+  // ========== 送信完了（ランダムメッセージ） ==========
+  function showResult(scheduleValue) {
     document.getElementById('formScreen').style.display = 'none';
     document.getElementById('errorScreen').style.display = 'none';
     document.getElementById('resultScreen').style.display = 'block';
     document.getElementById('resultScreen').style.animation = 'fadeInUp 0.5s ease-out';
+
+    // 選択に応じたメッセージ
+    const msgs = {
+      '3/20（金）参加可能': [
+        '金曜の夜が最高の夜になる予感…！準備運動しておいてください。',
+        '花金に乾杯する準備はできましたか？肝臓の準備もお忘れなく。'
+      ],
+      '3/28（土）参加可能': [
+        '土曜の宴、朝まで語り明かしましょう（翌日の予定は白紙推奨）。',
+        '土曜なので翌日を気にせず飲める…これは危険なフラグです。'
+      ],
+      '両日OK': [
+        'あなたの参加率100%、幹事の信頼度も100%です。',
+        '両日参加とは…送別会への愛が深すぎます。表彰ものです。'
+      ],
+      '両日NG': [
+        '残念ですが、心の中であなたの席は空けておきます。',
+        '来られなくても大丈夫。写真と思い出はしっかり届けます。'
+      ]
+    };
+    const list = msgs[scheduleValue] || ['回答ありがとうございます！'];
+    document.getElementById('funMessage').textContent = list[Math.floor(Math.random() * list.length)];
 
     // カウントダウン（3/20基準）
     const now = new Date();
@@ -446,16 +610,15 @@
   function retryForm() {
     document.getElementById('errorScreen').style.display = 'none';
     document.getElementById('formScreen').style.display = 'block';
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = false;
-    btn.textContent = '送信（幹事へ念を送る）';
+    submitBtn.disabled = false;
+    submitBtn.textContent = '送信（幹事へ念を送る）';
     document.getElementById('sendingMsg').style.display = 'none';
   }
 
   function launchConfetti() {
     const container = document.getElementById('confettiContainer');
-    const colors = ['#e91e63','#ff9800','#4caf50','#2196f3','#9c27b0','#ffeb3b'];
-    for (let i = 0; i < 60; i++) {
+    const colors = ['#e91e63','#ff9800','#4caf50','#2196f3','#9c27b0','#ffeb3b','#00bcd4'];
+    for (let i = 0; i < 80; i++) {
       const piece = document.createElement('div');
       piece.className = 'confetti-piece';
       piece.style.left = Math.random() * 100 + '%';
@@ -463,6 +626,7 @@
       piece.style.background = colors[Math.floor(Math.random() * colors.length)];
       piece.style.width = (Math.random() * 8 + 6) + 'px';
       piece.style.height = (Math.random() * 8 + 6) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
       piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
       piece.style.animationDelay = (Math.random() * 1.5) + 's';
       container.appendChild(piece);
