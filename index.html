@@ -129,7 +129,8 @@
     position: relative;
   }
 
-  .radio-option input[type="radio"] {
+  .radio-option input[type="radio"],
+  .radio-option input[type="checkbox"] {
     display: none;
   }
 
@@ -153,11 +154,18 @@
     transform: translateX(4px);
   }
 
-  .radio-option input[type="radio"]:checked + label {
+  .radio-option input[type="radio"]:checked + label,
+  .radio-option input[type="checkbox"]:checked + label {
     border-color: #7986cb;
     background: #e8eaf6;
     color: #283593;
     font-weight: 600;
+  }
+
+  .multi-hint {
+    font-size: 0.78rem;
+    color: #90a4ae;
+    margin-bottom: 10px;
   }
 
   /* 選択時に飛び出す絵文字 */
@@ -376,35 +384,36 @@
 
       <!-- Q2 参加日程 -->
       <div class="form-group" id="scheduleGroup">
-        <label class="question">Q2. あなたのスケジュールを教えてください</label>
+        <label class="question">Q2. 参加できる日程を教えてください</label>
+        <p class="multi-hint">※ 複数選択OK！参加できない場合は「全日程NG」を選んでください</p>
         <div class="radio-group">
 
           <div class="radio-option">
-            <input type="radio" name="schedule" id="opt1" value="3/20（金）参加可能"
+            <input type="checkbox" name="schedule" id="opt1" value="3/20（金）"
                    data-reaction="金曜の夜、最高のスタートですね！"
                    data-emoji="🍻">
             <label for="opt1">3/20（金）参加可能</label>
           </div>
 
           <div class="radio-option">
-            <input type="radio" name="schedule" id="opt2" value="3/28（土）参加可能"
+            <input type="checkbox" name="schedule" id="opt2" value="3/21（土）"
                    data-reaction="土曜なら心置きなく飲めますね！"
                    data-emoji="🎉">
-            <label for="opt2">3/28（土）参加可能</label>
+            <label for="opt2">3/21（土）参加可能</label>
           </div>
 
           <div class="radio-option">
-            <input type="radio" name="schedule" id="opt3" value="両日OK"
-                   data-reaction="幹事が泣いて喜びます。感謝の極み…！"
-                   data-emoji="🙌">
-            <label for="opt3">両日OK</label>
+            <input type="checkbox" name="schedule" id="opt4" value="3/27（土）"
+                   data-reaction="月末の土曜、盛り上がること間違いなし！"
+                   data-emoji="🥳">
+            <label for="opt4">3/27（土）参加可能</label>
           </div>
 
           <div class="radio-option">
-            <input type="radio" name="schedule" id="opt4" value="両日NG"
+            <input type="radio" name="ng" id="opt3" value="全日程NG"
                    data-reaction="幹事は静かに泣いています…。心だけでも参加ですね。"
                    data-emoji="😢">
-            <label for="opt4">両日NG</label>
+            <label for="opt3">全日程NG</label>
           </div>
 
         </div>
@@ -474,20 +483,43 @@
     setTimeout(() => el.remove(), 800);
   }
 
-  // ========== ラジオボタン選択時 ==========
-  document.querySelectorAll('input[name="schedule"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-      const box = document.getElementById('reactionBox');
-      box.textContent = this.dataset.reaction;
-      box.classList.add('visible');
-      box.style.animation = 'none';
-      box.offsetHeight;
-      box.style.animation = 'popIn 0.4s ease-out';
+  // ========== 日程チェックボックス選択時 ==========
+  function showReaction(input) {
+    const box = document.getElementById('reactionBox');
+    box.textContent = input.dataset.reaction;
+    box.classList.add('visible');
+    box.style.animation = 'none';
+    box.offsetHeight;
+    box.style.animation = 'popIn 0.4s ease-out';
+    const label = input.nextElementSibling;
+    burstEmoji(label, input.dataset.emoji);
+  }
 
-      // 絵文字バースト
-      const label = this.nextElementSibling;
-      burstEmoji(label, this.dataset.emoji);
+  // 日程チェックボックス：選択時に「全日程NG」を解除
+  document.querySelectorAll('input[name="schedule"]').forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (this.checked) {
+        document.getElementById('opt3').checked = false;
+        showReaction(this);
+        // 複数チェックされたら特別リアクション
+        const checked = document.querySelectorAll('input[name="schedule"]:checked');
+        if (checked.length >= 2) {
+          const box = document.getElementById('reactionBox');
+          box.textContent = '幹事が泣いて喜びます。感謝の極み…！';
+          box.style.animation = 'none';
+          box.offsetHeight;
+          box.style.animation = 'popIn 0.4s ease-out';
+        }
+      }
     });
+  });
+
+  // 「全日程NG」選択時に日程チェックボックスを解除
+  document.getElementById('opt3').addEventListener('change', function() {
+    if (this.checked) {
+      document.querySelectorAll('input[name="schedule"]').forEach(cb => cb.checked = false);
+      showReaction(this);
+    }
   });
 
   // ========== 送信ボタンホバーで文言チェンジ ==========
@@ -508,7 +540,8 @@
   // ========== バリデーション（震えるエラー） ==========
   function submitForm() {
     const name = document.getElementById('nameInput').value.trim();
-    const schedule = document.querySelector('input[name="schedule"]:checked');
+    const checkedDates = document.querySelectorAll('input[name="schedule"]:checked');
+    const isNG = document.getElementById('opt3').checked;
     const nameError = document.getElementById('nameError');
     const scheduleError = document.getElementById('scheduleError');
     let valid = true;
@@ -524,7 +557,7 @@
       nameError.style.display = 'none';
     }
 
-    if (!schedule) {
+    if (checkedDates.length === 0 && !isNG) {
       valid = false;
       scheduleError.style.display = 'block';
       const g = document.getElementById('scheduleGroup');
@@ -537,6 +570,15 @@
 
     if (!valid) return;
 
+    // スケジュール値を組み立て
+    let scheduleValue;
+    if (isNG) {
+      scheduleValue = '全日程NG';
+    } else {
+      const values = Array.from(checkedDates).map(cb => cb.value);
+      scheduleValue = values.join('・');
+    }
+
     // ボタン無効化 & 送信中表示
     submitBtn.disabled = true;
     submitBtn.textContent = '送信中...';
@@ -544,7 +586,7 @@
 
     const data = {
       name: name,
-      schedule: schedule.value,
+      schedule: scheduleValue,
       timestamp: new Date().toLocaleString('ja-JP')
     };
 
@@ -555,7 +597,7 @@
       body: JSON.stringify(data)
     })
     .then(() => {
-      showResult(schedule.value);
+      showResult(scheduleValue);
     })
     .catch(() => {
       showError();
@@ -570,25 +612,23 @@
     document.getElementById('resultScreen').style.animation = 'fadeInUp 0.5s ease-out';
 
     // 選択に応じたメッセージ
-    const msgs = {
-      '3/20（金）参加可能': [
-        '金曜の夜が最高の夜になる予感…！準備運動しておいてください。',
-        '花金に乾杯する準備はできましたか？肝臓の準備もお忘れなく。'
-      ],
-      '3/28（土）参加可能': [
-        '土曜の宴、朝まで語り明かしましょう（翌日の予定は白紙推奨）。',
-        '土曜なので翌日を気にせず飲める…これは危険なフラグです。'
-      ],
-      '両日OK': [
-        'あなたの参加率100%、幹事の信頼度も100%です。',
-        '両日参加とは…送別会への愛が深すぎます。表彰ものです。'
-      ],
-      '両日NG': [
+    let list;
+    if (scheduleValue === '全日程NG') {
+      list = [
         '残念ですが、心の中であなたの席は空けておきます。',
         '来られなくても大丈夫。写真と思い出はしっかり届けます。'
-      ]
-    };
-    const list = msgs[scheduleValue] || ['回答ありがとうございます！'];
+      ];
+    } else if (scheduleValue.includes('・')) {
+      list = [
+        '複数日程OKとは…幹事が泣いて喜びます。感謝の極み！',
+        'フレキシブルな対応、幹事の信頼度100%です。'
+      ];
+    } else {
+      list = [
+        'その日を全力で楽しみましょう！肝臓の準備もお忘れなく。',
+        '最高の夜になる予感…！準備運動しておいてください。'
+      ];
+    }
     document.getElementById('funMessage').textContent = list[Math.floor(Math.random() * list.length)];
 
     // カウントダウン（3/20基準）
