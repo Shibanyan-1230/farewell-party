@@ -413,7 +413,7 @@
       </div>
 
       <button type="button" class="submit-btn" id="submitBtn" onclick="submitForm()">
-        送信（幹事へ念を送る）
+        送信
       </button>
       <p class="sending-msg" id="sendingMsg">念を転送しています<span class="dots"></span></p>
     </form>
@@ -492,11 +492,11 @@
 
   // ========== 送信ボタンホバーで文言チェンジ ==========
   const btnTexts = [
-    '送信（幹事へ念を送る）',
-    '送信（祈りを込めて）',
-    '送信（ポチッとな）',
-    '送信（覚悟はいいか）',
-    '送信（幹事が待ってる）'
+    '送信',
+    'ポチッとな',
+    '届け、この想い',
+    'いざ、送信',
+    '幹事が待ってる'
   ];
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.addEventListener('mouseenter', function() {
@@ -611,7 +611,7 @@
     document.getElementById('errorScreen').style.display = 'none';
     document.getElementById('formScreen').style.display = 'block';
     submitBtn.disabled = false;
-    submitBtn.textContent = '送信（幹事へ念を送る）';
+    submitBtn.textContent = '送信';
     document.getElementById('sendingMsg').style.display = 'none';
   }
 
